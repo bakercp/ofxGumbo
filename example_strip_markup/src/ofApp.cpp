@@ -24,6 +24,8 @@
 
 
 #include "ofApp.h"
+#include "assert.h"
+
 
 static std::string cleantext(GumboNode* node)
 {

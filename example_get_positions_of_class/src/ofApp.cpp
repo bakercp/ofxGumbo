@@ -24,6 +24,7 @@
 
 
 #include "ofApp.h"
+#include <assert.h>
 
 
 static std::string find_title(const GumboNode* root)
