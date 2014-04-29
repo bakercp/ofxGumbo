@@ -27,45 +27,50 @@
 #include <assert.h>
 
 
-static std::string find_line(const std::string& original_text, const GumboAttribute& attr)
+static std::string find_title(const GumboNode* root)
 {
-    size_t attr_index = attr.original_value.data - original_text.data();
-    size_t begin = original_text.rfind("\n", attr_index) + 1;
-    size_t end = original_text.find("\n", attr_index);
-    if (end != std::string::npos) {
-        end--;
-    } else {
-        end = (size_t) original_text.length() - 1;
-    }
-    end = std::min(end, attr_index + 40);
-    begin = std::max(begin, attr_index - 40);
-    return original_text.substr(begin, end - begin);
-}
+    assert(root->type == GUMBO_NODE_ELEMENT);
+    assert(root->v.element.children.length >= 2);
 
-static void search_for_class(GumboNode* node,
-                             const std::string& original_text,
-                             const std::string& cls_name)
-{
-    if (node->type != GUMBO_NODE_ELEMENT)
+    const GumboVector* root_children = &root->v.element.children;
+
+    GumboNode* head = 0;
+
+    for (unsigned int i = 0; i < root_children->length; ++i)
     {
-        return;
+        GumboNode* child = (GumboNode*)root_children->data[i];
+        if (child->type == GUMBO_NODE_ELEMENT &&
+            child->v.element.tag == GUMBO_TAG_HEAD)
+        {
+            head = child;
+            break;
+        }
     }
 
-    GumboAttribute* cls_attr;
+    assert(0 != head);
 
-    if ((cls_attr = gumbo_get_attribute(&node->v.element.attributes, "class")) &&
-        strstr(cls_attr->value, cls_name.c_str()) != NULL) {
-        std::cout << cls_attr->value_start.line << ":"
-        << cls_attr->value_start.column << " - "
-        << find_line(original_text, *cls_attr) << std::endl;
-    }
+    GumboVector* head_children = &head->v.element.children;
 
-    GumboVector* children = &node->v.element.children;
-
-    for (int i = 0; i < children->length; ++i)
+    for (unsigned int i = 0; i < head_children->length; ++i)
     {
-        search_for_class(static_cast<GumboNode*>(children->data[i]), original_text, cls_name);
+        GumboNode* child = (GumboNode*)head_children->data[i];
+        if (child->type == GUMBO_NODE_ELEMENT &&
+            child->v.element.tag == GUMBO_TAG_TITLE)
+        {
+            if (1 != child->v.element.children.length)
+            {
+                return "<empty title>";
+            }
+
+            GumboNode* title_text = (GumboNode*)child->v.element.children.data[0];
+
+            assert(title_text->type == GUMBO_NODE_TEXT);
+
+            return 0 != title_text->v.text.text ? title_text->v.text.text : "<error>";
+        }
     }
+
+    return "<no title found>";
 }
 
 void ofApp::setup()
@@ -74,9 +79,7 @@ void ofApp::setup()
 
     GumboOutput* output = gumbo_parse(buffer.getText().c_str());
 
-    std::string classToFind = "anchor";
-
-    search_for_class(output->root, buffer.getText(), classToFind);
+    std::cout << find_title(output->root) << std::endl;
 
     gumbo_destroy_output(&kGumboDefaultOptions, output);
 }

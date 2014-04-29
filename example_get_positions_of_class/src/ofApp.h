@@ -30,9 +30,6 @@
 #include "ofxGumbo.h"
 
 
-//using namespace ofx;
-
-
 class ofApp: public ofBaseApp
 {
 public:

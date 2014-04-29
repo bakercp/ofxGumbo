@@ -39,7 +39,8 @@ static std::string cleantext(GumboNode* node)
     {
         std::string contents = "";
         GumboVector* children = &node->v.element.children;
-        for (int i = 0; i < children->length; ++i)
+        
+        for (unsigned int i = 0; i < children->length; ++i)
         {
             const std::string text = cleantext((GumboNode*) children->data[i]);
 
